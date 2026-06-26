@@ -1,0 +1,13 @@
+saya ingin buat sebuah aplikasi web menggunakan flask python untuk portfoliotracker. Aplikasi ini memerlukan login/
+  authentication (tentunya dibuat signup fitur menggunakan email dan password), kemudian ada fitur utama dimana user
+  bisa entry ticker asset (mengikuti format yahoo finance ticker, jadi kalau saham indonesia akan dikahiri ".JK") dan
+  juga harga pembelian serta qty dalam satuan share/lembar (bukan lot). Portolio disimpan dalam table di sqlite dengan
+  key email yang tadi sehingga walau dalam satu table akan multi  user. Harga sekarang harus kamu ambil dari yahoo
+  finance dan kamu akan hitungkan persentase untung rugi baik dalam persent maupun value. Tentunya kamu akan hitung
+  purchase value (perkalian qty kali harga pembelian) dan juga market value berdasarkan harga terkini. Pada saat dibuka
+  dan new entry kamu selalu hitung dan tarik data harga baru. Ada tombol refresh yang membuat kamu akan loop di table
+  tersebut untuk mengambil data harga terbaru dan kamu hitung lagi. Tapi kamu tidak perlu stream atau monitor terus
+  menerus harga, jadi user akan selalu refresh utk dapat harga terbaru. Di atas table ada tombol yg mendukung crud
+  (add/new, modify, delete) ya..jadi saat add/modify ada dialog masukkan nama ticker dan harga pembelian dan juga qty
+  pembelian. Tentunya sebelum disave akan ada check apakah ticker yg dimasukkan valid ticker di yahoo finance.
+  Sementara kita tidak ada lookup value dulu untuk mengisi ticker. Coba kasih tahu kalau paham dan mulai planning.
