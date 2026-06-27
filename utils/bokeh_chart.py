@@ -228,6 +228,7 @@ def generate_chart(ticker, df_plot):
     )
     p1.yaxis.formatter = NumeralTickFormatter(format="$0,0.00")
     p1.yaxis.minor_tick_line_color = None
+    p1.yaxis.location = "right"
 
     _candlestick_figure(p1, df)
     _format_xaxis(p1, df)
@@ -271,6 +272,7 @@ def generate_chart(ticker, df_plot):
     p2.yaxis.formatter = NumeralTickFormatter(format="0.0")
     p2.yaxis.axis_label = "ADX (14)"
     p2.yaxis.axis_label_text_color = COLORS["text"]
+    p2.yaxis.location = "right"
 
     _adx_figure(p2, df)
     _format_xaxis(p2, df)
