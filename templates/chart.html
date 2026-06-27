@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ ticker }} Chart - Portfolio Tracker{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+        <h2>📊 {{ ticker }} Chart</h2>
+        <div>
+            <a href="{{ url_for('portfolio.index') }}" class="btn btn-outline">⬅ Back to Portfolio</a>
+            <a href="{{ url_for('chart.chart_view', ticker=ticker) }}" class="btn btn-primary" style="margin-left: 0.5rem;">🔄 Refresh</a>
+        </div>
+    </div>
+
+    {% if error %}
+        <div style="text-align: center; padding: 3rem; color: #999;">
+            <p style="font-size: 2rem; margin-bottom: 1rem;">⚠️</p>
+            <p style="font-size: 1.1rem;">Gagal memuat data untuk {{ ticker }}.</p>
+            <p style="margin-top: 0.5rem;">Cek koneksi internet atau coba ticker lain.</p>
+        </div>
+    {% else %}
+        <!-- Current Status -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Close</div>
+                <div class="value" style="font-size: 1.3rem;">${{ "{:,.2f}".format(ta.current.close) if ta.current.close else 'N/A' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">SMA 20</div>
+                <div class="value" style="font-size: 1.3rem; color: #60a5fa;">${{ "{:,.2f}".format(ta.current.sma20) if ta.current.sma20 else 'N/A' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">ADX (14)</div>
+                <div class="value" style="font-size: 1.3rem; color: #a78bfa;">{{ ta.current.adx if ta.current.adx else 'N/A' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">SMA20 Distance</div>
+                <div class="value" style="font-size: 1.2rem; color: {{ '#4ade80' if ta.current.above_sma20 else '#f87171' }};">
+                    {{ "{:+.2f}%".format(ta.current.sma20_dist) if ta.current.sma20_dist is not none else 'N/A' }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Bokeh Chart -->
+        <div id="bokeh-chart-container" style="border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem;">
+            {{ chart_div | safe }}
+        </div>
+        {{ chart_script | safe }}
+
+        <!-- Trend Analysis -->
+        <div class="row" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <!-- ADX SMA% Basis -->
+            <div class="card" style="flex: 1; min-width: 250px; padding: 1.2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.8rem;">📈 ADX+SMA20 Basis</h3>
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 700; color: {{ '#4ade80' if adx_pct >= 35 else '#fbbf24' if adx_pct >= 30 else '#99907c' }};">
+                        {{ adx_pct }}%
+                    </div>
+                    <div style="font-size: 0.9rem; color: #99907c; margin-top: 0.3rem;">
+                        Bars ADX>25 & Close>SMA20 (last 100)
+                    </div>
+                    <div style="margin-top: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; display: inline-block;
+                                background: {{ '#064e3b' if 'Kuat' in adx_commentary else '#422006' }};
+                                color: {{ '#4ade80' if 'Kuat' in adx_commentary else '#fbbf24' }};">
+                        {{ adx_commentary }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-Window Trend -->
+            <div class="card" style="flex: 2; min-width: 350px; padding: 1.2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.8rem;">📊 Multi-Window Trend Analysis</h3>
+                <table style="margin-top: 0;">
+                    <thead>
+                        <tr>
+                            <th>Window</th>
+                            <th>Bars</th>
+                            <th>Bull %</th>
+                            <th>Bear %</th>
+                            <th>Sideway %</th>
+                            <th>Classification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in ta.trend_windows %}
+                        <tr>
+                            <td>{{ w.label }}</td>
+                            <td>{{ "{:,}".format(w.bars) }}</td>
+                            <td style="color: #4ade80;">{{ w.bull_pct }}%</td>
+                            <td style="color: #f87171;">{{ w.bear_pct }}%</td>
+                            <td style="color: #99907c;">{{ w.sideway_pct }}%</td>
+                            <td>
+                                <span style="color: {{ w.color }}; font-weight: 600;">
+                                    {{ w.classification }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ADX Brackets -->
+        <div class="card" style="margin-top: 1rem; padding: 1.2rem;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.8rem;">📋 ADX Distribution</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.8rem;">
+                {% for key, bracket in ta.adx_brackets.items() %}
+                <div style="background: #1e1b18; border-radius: 8px; padding: 0.8rem; border: 1px solid #2d2a21;">
+                    <div style="font-size: 0.8rem; color: #99907c;">{{ bracket.label }}</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; margin-top: 0.2rem;">{{ bracket.count }} bars</div>
+                    <div style="font-size: 0.85rem; color: #60a5fa;">
+                        {{ bracket.above_sma }} above SMA20 ({{ (bracket.above_sma / bracket.count * 100) | round(1) if bracket.count > 0 else 0 }}%)
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.85rem;">
+            {{ "{:,}".format(bars) }} bars · Data: Yahoo Finance · Loaded in {{ duration }}ms
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Bokeh resize handler
+window.addEventListener('resize', function() {
+    if (window.Bokeh && window.Bokeh.documents) {
+        window.Bokeh.documents.forEach(function(doc) {
+            doc.resize();
+        });
+    }
+});
+</script>
+{% endblock %}

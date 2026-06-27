@@ -54,7 +54,7 @@
             <tbody>
                 {% for entry in entries %}
                 <tr>
-                    <td><strong>{{ entry.ticker }}</strong></td>
+                    <td><strong><a href="{{ url_for('chart.chart_view', ticker=entry.ticker) }}" style="color: #4ade80; text-decoration: none; hover:text-decoration: underline;">{{ entry.ticker }}</a></strong></td>
                     <td>Rp {{ "{:,.2f}".format(entry.purchase_price) }}</td>
                     <td>{{ "{:,}".format(entry.quantity) }}</td>
                     <td>Rp {{ "{:,.2f}".format(entry.purchase_value) }}</td>

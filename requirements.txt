@@ -5,3 +5,5 @@ flask-wtf==1.2.2
 sqlalchemy==2.0.37
 yfinance==1.4.1
 python-dotenv==1.0.1
+bokeh==3.6.3
+numpy==2.4.6

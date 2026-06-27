@@ -3,6 +3,7 @@ from flask_login import LoginManager, current_user
 from models import db, User
 from auth import auth_bp
 from views.portfolio import portfolio_bp
+from views.chart import chart_bp
 import os
 
 
@@ -31,6 +32,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(portfolio_bp, url_prefix='/portfolio')
+    app.register_blueprint(chart_bp, url_prefix='')
     
     # Root route - redirect to portfolio or login
     @app.route('/')
