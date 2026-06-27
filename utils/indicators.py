@@ -89,3 +89,15 @@ def calculate_bollinger_bands(df: pd.DataFrame, period: int = 20) -> tuple:
     upper = sma + (std * 2)
     lower = sma - (std * 2)
     return upper, sma, lower
+
+
+def calculate_donchian(df: pd.DataFrame, period: int = 20) -> tuple:
+    """
+    Donchian Channel.
+    Returns (upper, middle, lower) channels.
+    Lower channel digunakan sebagai trailing stop loss (SL Donchian).
+    """
+    upper = df['High'].rolling(window=period).max()
+    lower = df['Low'].rolling(window=period).min()
+    middle = (upper + lower) / 2
+    return upper, middle, lower

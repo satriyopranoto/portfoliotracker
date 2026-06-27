@@ -1,6 +1,6 @@
 """
 Bokeh interactive chart module for Portfolio Tracker.
-Generates candlestick + ADX chart with interactive tools (zoom, pan, crosshair, hover).
+Generates candlestick + BB + Donchian SL + ADX chart with interactive tools.
 Uses components() for embedding in Jinja2 templates.
 """
 
@@ -34,6 +34,10 @@ COLORS = {
     "mdi": "#f87171",
     "sma20": "#60a5fa",
     "sma200": "#fbbf24",
+    "bb_upper": "#6b7280",
+    "bb_lower": "#6b7280",
+    "bb_fill": "#6b7280",
+    "donchian": "#fb923c",
     "ref_line": "#555555",
     "legend_text": "#eae1d4",
     "volume": "#555555",
@@ -85,45 +89,60 @@ def _candlestick_figure(p, df):
     mid_down = (df_down["Open"] + df_down["Close"]) / 2
     height_down = (df_down["Open"] - df_down["Close"]).clip(lower=0.001)
 
-    src_up = ColumnDataSource(
-        data=dict(
-            idx=df_up["idx"].values,
-            high=df_up["High"].values,
-            low=df_up["Low"].values,
-            mid=mid_up.values,
-            height=height_up.values,
-        )
-    )
-    src_down = ColumnDataSource(
-        data=dict(
-            idx=df_down["idx"].values,
-            high=df_down["High"].values,
-            low=df_down["Low"].values,
-            mid=mid_down.values,
-            height=height_down.values,
-        )
-    )
+    src_up = ColumnDataSource(dict(
+        idx=df_up["idx"], high=df_up["High"], low=df_up["Low"],
+        mid=mid_up, height=height_up,
+    ))
+    src_down = ColumnDataSource(dict(
+        idx=df_down["idx"], high=df_down["High"], low=df_down["Low"],
+        mid=mid_down, height=height_down,
+    ))
 
-    # High-low wicks
+    # Wicks
     p.segment("idx", "high", "idx", "low", source=src_up, color=COLORS["up"], line_width=1)
     p.segment("idx", "high", "idx", "low", source=src_down, color=COLORS["down"], line_width=1)
 
-    # Body rectangles
-    p.rect("idx", "mid", 0.7, "height", source=src_up, fill_color=COLORS["up"],
-           line_color=COLORS["up"], line_width=0.5)
-    p.rect("idx", "mid", 0.7, "height", source=src_down, fill_color=COLORS["down"],
-           line_color=COLORS["down"], line_width=0.5)
+    # Body
+    p.rect("idx", "mid", 0.7, "height", source=src_up,
+           fill_color=COLORS["up"], line_color=COLORS["up"], line_width=0.5)
+    p.rect("idx", "mid", 0.7, "height", source=src_down,
+           fill_color=COLORS["down"], line_color=COLORS["down"], line_width=0.5)
 
-    # SMA 20
-    sma20_data = pd.DataFrame({"idx": df["idx"].values, "sma20": df["SMA20"].values}).dropna()
+    # ── Bollinger Bands ──
+    bb_data = pd.DataFrame({
+        "idx": df["idx"], "upper": df["BB_upper"], "lower": df["BB_lower"],
+    }).dropna()
+    if not bb_data.empty:
+        src_bb = ColumnDataSource(bb_data)
+        # Upper band
+        ul = p.line("idx", "upper", source=src_bb, color=COLORS["bb_upper"],
+                    line_width=1, line_dash="dotted", legend_label="BB Upper")
+        ul.level = "underlay"
+        # Lower band
+        ll = p.line("idx", "lower", source=src_bb, color=COLORS["bb_lower"],
+                    line_width=1, line_dash="dotted", legend_label="BB Lower")
+        ll.level = "underlay"
+
+    # ── Donchian SL ──
+    dc_data = pd.DataFrame({
+        "idx": df["idx"], "sl": df["Donchian_lower"],
+    }).dropna()
+    if not dc_data.empty:
+        src_dc = ColumnDataSource(dc_data)
+        sl_line = p.line("idx", "sl", source=src_dc, color=COLORS["donchian"],
+                         line_width=2, line_dash="dashed", legend_label="SL Donchian (20)")
+        sl_line.level = "overlay"
+
+    # ── SMA 20 ──
+    sma20_data = pd.DataFrame({"idx": df["idx"], "sma20": df["SMA20"]}).dropna()
     if not sma20_data.empty:
         src_sma20 = ColumnDataSource(sma20_data)
         line = p.line("idx", "sma20", source=src_sma20, color=COLORS["sma20"],
                       line_width=2, legend_label="SMA 20")
         line.level = "overlay"
 
-    # SMA 200
-    sma200_data = pd.DataFrame({"idx": df["idx"].values, "sma200": df["SMA200"].values}).dropna()
+    # ── SMA 200 ──
+    sma200_data = pd.DataFrame({"idx": df["idx"], "sma200": df["SMA200"]}).dropna()
     if not sma200_data.empty:
         src_sma200 = ColumnDataSource(sma200_data)
         line = p.line("idx", "sma200", source=src_sma200, color=COLORS["sma200"],
@@ -136,17 +155,14 @@ def _candlestick_figure(p, df):
 def _adx_figure(p, df):
     """Draw ADX, +DI, -DI indicators on figure p."""
     adx_data = pd.DataFrame({
-        "idx": df["idx"].values,
-        "adx": df["ADX"].values,
-        "pdi": df["+DI"].values,
-        "mdi": df["-DI"].values,
+        "idx": df["idx"], "adx": df["ADX"],
+        "pdi": df["+DI"], "mdi": df["-DI"],
     }).dropna()
 
     if adx_data.empty:
         return p
 
     src = ColumnDataSource(adx_data)
-
     p.line("idx", "adx", source=src, color=COLORS["adx"], line_width=2, legend_label="ADX")
     p.line("idx", "pdi", source=src, color=COLORS["pdi"], line_width=1.5,
            line_dash="dashed", legend_label="+DI")
@@ -154,13 +170,9 @@ def _adx_figure(p, df):
            line_dash="dashed", legend_label="-DI")
 
     for level in [25, 20]:
-        span = Span(
-            location=level, dimension="width",
-            line_color=COLORS["ref_line"],
-            line_width=1 if level == 25 else 0.8,
-            line_dash="dotted",
-            line_alpha=0.7 if level == 25 else 0.5,
-        )
+        span = Span(location=level, dimension="width", line_color=COLORS["ref_line"],
+                    line_width=1 if level == 25 else 0.8, line_dash="dotted",
+                    line_alpha=0.7 if level == 25 else 0.5)
         p.renderers.append(span)
 
     p.y_range = Range1d(0, 60)
@@ -196,8 +208,8 @@ def generate_chart(ticker, df_plot):
     ticker : str
         Stock ticker symbol.
     df_plot : pd.DataFrame
-        Must contain columns: Open, High, Low, Close, SMA20, SMA200, ADX, +DI, -DI, Volume
-        with DatetimeIndex.
+        Must contain columns: Open, High, Low, Close, SMA20, SMA200, BB_upper, BB_lower,
+        Donchian_lower, ADX, +DI, -DI, Volume with DatetimeIndex.
 
     Returns
     -------
@@ -219,24 +231,19 @@ def generate_chart(ticker, df_plot):
 
     _candlestick_figure(p1, df)
     _format_xaxis(p1, df)
-    p1.xaxis.visible = False  # hide for top subplot
+    p1.xaxis.visible = False
 
     # Crosshair
     p1.add_tools(CrosshairTool(line_color="#666666", line_alpha=0.4))
 
-    # Hover tooltip for candlesticks
+    # Hover tooltip
     date_strs = [d.strftime("%Y-%m-%d") for d in df.index]
-    src_hover = ColumnDataSource(
-        data=dict(
-            idx=df["idx"].values,
-            Open=df["Open"].values,
-            High=df["High"].values,
-            Low=df["Low"].values,
-            Close=df["Close"].values,
-            Volume=df["Volume"].values if "Volume" in df.columns else np.zeros(len(df)),
-            date_str=date_strs,
-        )
-    )
+    src_hover = ColumnDataSource(dict(
+        idx=df["idx"], Open=df["Open"], High=df["High"],
+        Low=df["Low"], Close=df["Close"],
+        Volume=df["Volume"] if "Volume" in df.columns else np.zeros(len(df)),
+        date_str=date_strs,
+    ))
 
     circ = p1.circle("idx", "Close", source=src_hover, size=1,
                      color=COLORS["bg"], alpha=0.0,
@@ -273,8 +280,7 @@ def generate_chart(ticker, df_plot):
 
     hover_adx = HoverTool(
         tooltips=[("Date", "$x{%Y-%m-%d}"), ("ADX", "$y{0.0}")],
-        formatters={"$x": "datetime"},
-        mode="mouse", toggleable=False,
+        formatters={"$x": "datetime"}, mode="mouse", toggleable=False,
     )
     p2.add_tools(hover_adx)
 
@@ -289,7 +295,6 @@ def generate_chart(ticker, df_plot):
         p.legend.border_line_alpha = 0.5
         p.legend.click_policy = "hide"
 
-    # ── Layout ────────────────────────────────────────────
     layout = column(p1, p2, sizing_mode="stretch_width", spacing=0)
 
     script, div = components(layout)
