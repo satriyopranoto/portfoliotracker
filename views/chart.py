@@ -12,6 +12,7 @@ import time
 from utils.indicators import calculate_adx, calculate_sma, calculate_bollinger_bands
 from utils.trend_analysis import calculate_trend_analysis, calculate_adx_sma_pct
 from utils.bokeh_chart import generate_chart
+from bokeh.resources import CDN
 
 chart_bp = Blueprint('chart', __name__)
 
@@ -67,6 +68,7 @@ def chart_view(ticker):
             bars=len(df),
             duration=duration,
             error=False,
+            bokeh_cdn=CDN.render(),
         )
 
     except Exception as e:

@@ -41,8 +41,11 @@
             </div>
         </div>
 
+        <!-- Bokeh JS CDN -->
+        {{ bokeh_cdn | safe }}
+
         <!-- Bokeh Chart -->
-        <div id="bokeh-chart-container" style="border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem;">
+        <div id="bokeh-chart-container" style="border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; min-height: 580px;">
             {{ chart_div | safe }}
         </div>
         {{ chart_script | safe }}
