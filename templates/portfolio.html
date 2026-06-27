@@ -21,17 +21,17 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="label">Total Purchase Value</div>
-                <div class="value">Rp {{ "{:,.2f}".format(entries|sum(attribute='purchase_value')) }}</div>
+                <div class="value">${{ "{:,.2f}".format(entries|sum(attribute='purchase_value')) }}</div>
             </div>
             <div class="stat-card">
                 <div class="label">Total Market Value</div>
-                <div class="value">Rp {{ "{:,.2f}".format(entries|selectattr('market_value')|sum(attribute='market_value') or 0) }}</div>
+                <div class="value">${{ "{:,.2f}".format(entries|selectattr('market_value')|sum(attribute='market_value') or 0) }}</div>
             </div>
             <div class="stat-card">
                 <div class="label">Total P&L</div>
                 {% set total_pnl = (entries|selectattr('unrealized_pnl_value')|sum(attribute='unrealized_pnl_value') or 0) %}
                 <div class="value" style="color: {{ 'green' if total_pnl >= 0 else 'red' }};">
-                    Rp {{ "{:,.2f}".format(total_pnl) }}
+                    ${{ "{:,.2f}".format(total_pnl) }}
                 </div>
             </div>
         </div>
@@ -55,19 +55,19 @@
                 {% for entry in entries %}
                 <tr>
                     <td><strong><a href="{{ url_for('chart.chart_view', ticker=entry.ticker) }}" style="color: #4ade80; text-decoration: none; hover:text-decoration: underline;">{{ entry.ticker }}</a></strong></td>
-                    <td>Rp {{ "{:,.2f}".format(entry.purchase_price) }}</td>
+                    <td>${{ "{:,.2f}".format(entry.purchase_price) }}</td>
                     <td>{{ "{:,}".format(entry.quantity) }}</td>
-                    <td>Rp {{ "{:,.2f}".format(entry.purchase_value) }}</td>
+                    <td>${{ "{:,.2f}".format(entry.purchase_value) }}</td>
                     <td>
                         {% if entry.current_price %}
-                            Rp {{ "{:,.2f}".format(entry.current_price) }}
+                            ${{ "{:,.2f}".format(entry.current_price) }}
                         {% else %}
                             <span style="color: #999;">N/A</span>
                         {% endif %}
                     </td>
                     <td>
                         {% if entry.market_value %}
-                            Rp {{ "{:,.2f}".format(entry.market_value) }}
+                            ${{ "{:,.2f}".format(entry.market_value) }}
                         {% else %}
                             <span style="color: #999;">N/A</span>
                         {% endif %}
@@ -75,7 +75,7 @@
                     <td>
                         {% if entry.unrealized_pnl_value is not none %}
                             <span class="badge badge-{{ 'success' if entry.unrealized_pnl_value >= 0 else 'danger' }}">
-                                Rp {{ "{:,.2f}".format(entry.unrealized_pnl_value) }}
+                                ${{ "{:,.2f}".format(entry.unrealized_pnl_value) }}
                             </span>
                         {% else %}
                             <span style="color: #999;">N/A</span>
@@ -128,8 +128,8 @@
                 <small style="color: #666; font-size: 0.85rem;">Format: Yahoo Finance ticker symbol (Indonesian stocks use .JK)</small>
             </div>
             <div class="form-group">
-                <label for="add_purchase_price">Purchase Price (Rp)</label>
-                <input type="number" id="add_purchase_price" name="purchase_price" step="0.01" min="0.01" placeholder="e.g. 8500.00" required>
+                <label for="add_purchase_price">Purchase Price ($)</label>
+                <input type="number" id="add_purchase_price" name="purchase_price" step="0.01" min="0.01" placeholder="e.g. 85.00" required>
             </div>
             <div class="form-group">
                 <label for="add_quantity">Quantity (shares)</label>
@@ -155,7 +155,7 @@
                 <input type="text" id="edit_ticker" name="ticker" required style="text-transform: uppercase;">
             </div>
             <div class="form-group">
-                <label for="edit_purchase_price">Purchase Price (Rp)</label>
+                <label for="edit_purchase_price">Purchase Price ($)</label>
                 <input type="number" id="edit_purchase_price" name="purchase_price" step="0.01" min="0.01" required>
             </div>
             <div class="form-group">
