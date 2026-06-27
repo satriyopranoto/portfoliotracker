@@ -117,11 +117,11 @@ def _candlestick_figure(p, df):
         src_bb = ColumnDataSource(bb_data)
         # Upper band
         ul = p.line("idx", "upper", source=src_bb, color=COLORS["bb_upper"],
-                    line_width=1, line_dash="dotted", legend_label="BB Upper")
+                    line_width=2, legend_label="BB Upper")
         ul.level = "underlay"
         # Lower band
         ll = p.line("idx", "lower", source=src_bb, color=COLORS["bb_lower"],
-                    line_width=1, line_dash="dotted", legend_label="BB Lower")
+                    line_width=2, legend_label="BB Lower")
         ll.level = "underlay"
 
     # ── Donchian SL ──
@@ -166,9 +166,9 @@ def _adx_figure(p, df):
     src = ColumnDataSource(adx_data)
     p.line("idx", "adx", source=src, color=COLORS["adx"], line_width=2, legend_label="ADX")
     p.line("idx", "pdi", source=src, color=COLORS["pdi"], line_width=1.5,
-           line_dash="dashed", legend_label="+DI")
+           legend_label="+DI")
     p.line("idx", "mdi", source=src, color=COLORS["mdi"], line_width=1.5,
-           line_dash="dashed", legend_label="-DI")
+           legend_label="-DI")
 
     for level in [25, 20]:
         span = Span(location=level, dimension="width", line_color=COLORS["ref_line"],

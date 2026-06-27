@@ -1,6 +1,6 @@
 # Portfolio Tracker 📈
 
-A Flask-based web application for tracking stock investment portfolios with real-time pricing from Yahoo Finance.
+A Flask-based web application for tracking stock investment portfolios with real-time pricing from Yahoo Finance, interactive Bokeh charts, and ADX+SMA20 trend analysis.
 
 ## Features
 
@@ -11,18 +11,27 @@ A Flask-based web application for tracking stock investment portfolios with real
 - ✅ **P&L Calculation** - Calculate profit/loss in both value and percentage
 - ✅ **Ticker Validation** - Validate tickers before saving
 - ✅ **Refresh Prices** - Update prices individually or all at once
+- ✅ **Interactive Chart** - Bokeh candlestick chart with SMA20, SMA200, Bollinger Bands, Donchian SL
+- ✅ **ADX Subplot** - ADX(14), +DI, -DI indicators
+- ✅ **Trend Analysis** - Multi-window ADX+SMA20 framework (Last 100/200/All bars)
 - ✅ **Responsive UI** - Modern design with custom CSS
+- ✅ **Docker Support** - Containerized deployment with Docker Compose
 
-## Requirements
+## Quick Start (Docker)
+
+```bash
+docker compose up -d --build
+```
+
+Open http://localhost:5005
+
+## Manual Installation
+
+### Requirements
 
 - Python 3.8+
-- Flask 3.1.0
-- Flask-Login 0.6.3
-- Flask-SQLAlchemy 3.1.1
-- yfinance 1.4.1
-- SQLAlchemy 2.0.37
 
-## Installation
+### Installation
 
 1. **Clone repository**
 ```bash
@@ -50,7 +59,6 @@ source venv/bin/activate
 4. **Install dependencies**
 ```bash
 pip install -r requirements.txt
-pip install flask-sqlalchemy
 ```
 
 5. **Run the application**
@@ -63,12 +71,38 @@ python app.py
 http://localhost:5005
 ```
 
+## Docker Deployment
+
+### Prerequisites
+- Docker & Docker Compose installed
+
+### Build & Run
+```bash
+# Build image and start container
+docker compose up -d --build
+
+# Stop container
+docker compose down
+
+# View logs
+docker logs portfolio-tracker
+```
+
+### Environment Variables (docker-compose.yaml)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URI` | `sqlite:////app/data/portfolio.db` | SQLite database path (persisted via named volume) |
+| `SECRET_KEY` | `portfolio-tracker-docker-secret-key-2024` | Flask secret key |
+
+### Data Persistence
+Portfolio data is stored in a Docker named volume `portfolio-data` mounted at `/app/data/`. The data survives container restarts and rebuilds.
+
 ## Usage
 
 ### 1. Sign Up
 - Open the application and click "Sign Up"
 - Enter email and password (minimum 6 characters)
-- Click "Daftar" (Register)
+- Click "Register"
 
 ### 2. Login
 - Enter your registered email and password
@@ -77,25 +111,36 @@ http://localhost:5005
 ### 3. Add Portfolio Entry
 - Click "Add Entry" button
 - Enter ticker symbol (example: `BBCA.JK` for Indonesian stocks, `AAPL` for US stocks)
-- Enter purchase price in Rupiah
+- Enter purchase price
 - Enter quantity in shares (not lots)
-- Click "Simpan" (Save)
+- Click "Save"
 - The app will validate the ticker and fetch current price
 
 ### 4. View Portfolio
 - View summary: Total Purchase Value, Total Market Value, Total P&L
 - View details per entry: Ticker, Purchase Price, Qty, Purchase Value, Current Price, Market Value, P&L Value, P&L %
 
-### 5. Refresh Prices
-- **Refresh All**: Click "Refresh All" button to update all prices at once
-- **Individual**: Edit entry to refresh individual price
+### 5. Open Chart
+- Click any **ticker symbol** (green link) in the table to open the interactive chart page
+- Chart includes:
+  - Candlestick chart (dark theme)
+  - SMA 20 (blue line)
+  - SMA 200 (yellow dashed line)
+  - Bollinger Bands (grey lines)
+  - Donchian Stop Loss (orange dashed line)
+  - ADX(14) subplot with +DI/-DI
+- Trend analysis panel shows multi-window ADX+SMA20 breakdown
 
-### 6. Edit Entry
+### 6. Refresh Prices
+- **Refresh All**: Click "Refresh All" button to update all prices at once
+- **Individual**: Click the refresh button on a specific entry
+
+### 7. Edit Entry
 - Click "Edit" button on the entry you want to modify
 - Update ticker, price, or quantity
 - Click "Update"
 
-### 7. Delete Entry
+### 8. Delete Entry
 - Click "Delete" button on the entry you want to remove
 - Confirm deletion
 
@@ -120,17 +165,26 @@ portfoliotracker/
 ├── models.py              # Database models (User, PortfolioEntry)
 ├── auth.py                # Authentication routes
 ├── views/
-│   └── portfolio.py       # Portfolio CRUD routes
+│   ├── portfolio.py       # Portfolio CRUD routes
+│   └── chart.py           # Bokeh chart page route
 ├── utils/
-│   └── yahoo.py           # Yahoo Finance utilities
+│   ├── yahoo.py           # Yahoo Finance utilities
+│   ├── indicators.py      # ADX, SMA, BB, Donchian calculations
+│   ├── bokeh_chart.py     # Bokeh interactive chart generator
+│   └── trend_analysis.py  # ADX+SMA20 trend analysis framework
 ├── templates/
-│   ├── base.html          # Base template
+│   ├── base.html          # Base template with navbar & modal
 │   ├── login.html         # Login page
 │   ├── signup.html        # Signup page
-│   └── portfolio.html     # Portfolio page
+│   ├── portfolio.html     # Portfolio table page
+│   └── chart.html         # Bokeh chart + trend analysis page
+├── static/
+│   └── favicon.svg        # SVG favicon
+├── Dockerfile             # Docker build configuration
+├── docker-compose.yaml    # Docker Compose configuration
 ├── requirements.txt       # Python dependencies
-├── requirement.txt        # Original requirements document
-└── README.md             # This file
+├── .dockerignore          # Docker build context exclusions
+└── README.md              # This file
 ```
 
 ## Database Schema
@@ -144,11 +198,11 @@ portfoliotracker/
 - `id` (Integer, Primary Key)
 - `user_id` (Integer, Foreign Key)
 - `ticker` (String) - e.g., "BBCA.JK"
-- `purchase_price` (Float) - Purchase price in Rupiah
+- `purchase_price` (Float) - Purchase price
 - `quantity` (Integer) - Number of shares
 - `current_price` (Float) - Current price (nullable)
 
-## Calculated Properties
+### Calculated Properties
 
 - **Purchase Value**: `quantity × purchase_price`
 - **Market Value**: `quantity × current_price`
@@ -157,7 +211,7 @@ portfoliotracker/
 
 ## Notes
 
-- Prices are not streamed real-time; users need to click "Refresh All" to update
+- Prices are not streamed real-time; users need to click "Refresh All" or ticker to update
 - Ticker validation is performed before saving to ensure ticker is valid on Yahoo Finance
 - SQLite database is automatically created when the application runs for the first time
 - Passwords are hashed using Werkzeug security
@@ -171,7 +225,7 @@ pip install -r requirements.txt
 ```
 
 ### Database Error
-Delete the `portfolio.db` file and restart the application to recreate the database.
+Delete the `portfolio.db` file (or Docker volume `portfolio-data`) and restart the application to recreate the database.
 
 ### Yahoo Finance API Error
 Check your internet connection and ensure the ticker format is correct.
