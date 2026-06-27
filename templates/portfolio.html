@@ -97,7 +97,7 @@
                         </button>
                         <form method="POST" action="{{ url_for('portfolio.delete', entry_id=entry.id) }}" 
                               style="display: inline;" 
-                              onsubmit="return confirm('Hapus entry {{ entry.ticker }}?');">
+                              onsubmit="return confirm('Delete entry {{ entry.ticker }}?');">
                             <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
                                 🗑️ Delete
                             </button>

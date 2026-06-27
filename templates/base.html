@@ -148,7 +148,7 @@
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('portfolio.index') }}">Portfolio</a>
             <span style="color: rgba(255,255,255,0.5); margin-left: 1rem;">|</span>
-            <a href="{{ url_for('auth.logout') }}" onclick="return confirm('Yakin logout?')">Logout ({{ current_user.email }})</a>
+            <a href="{{ url_for('auth.logout') }}" onclick="return confirm('Sure to logout?')">Logout ({{ current_user.email }})</a>
         {% else %}
             <a href="{{ url_for('auth.login') }}">Login</a>
             <a href="{{ url_for('auth.signup') }}" class="btn btn-primary" style="margin-left: 1rem; padding: 0.4rem 1rem;">Sign Up</a>
@@ -176,8 +176,8 @@
         <h3 id="modalTitle"></h3>
         <form method="POST" id="modalForm"></form>
         <div style="margin-top: 1.5rem; text-align: right;">
-            <button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button>
-            <button type="submit" class="btn btn-primary">Simpan</button>
+            <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
         </div>
     </div>
 </div>

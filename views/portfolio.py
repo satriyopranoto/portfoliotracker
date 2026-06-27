@@ -32,23 +32,23 @@ def add():
 
         # Validate fields
         if not ticker or not purchase_price_str or not quantity_str:
-            flash('Semua field harus diisi.', 'error')
+            flash('All fields are required.', 'error')
             return redirect(url_for('portfolio.add'))
 
         try:
             purchase_price = float(purchase_price_str)
             quantity = int(quantity_str)
         except (ValueError, TypeError):
-            flash('Harga dan jumlah harus berupa angka.', 'error')
+            flash('Price and quantity must be numbers.', 'error')
             return redirect(url_for('portfolio.add'))
 
         if purchase_price <= 0 or quantity <= 0:
-            flash('Harga dan jumlah harus lebih dari 0.', 'error')
+            flash('Price and quantity must be greater than 0.', 'error')
             return redirect(url_for('portfolio.add'))
 
         # Validate ticker
         if not validate_ticker(ticker):
-            flash(f'Ticker "{ticker}" tidak valid atau tidak ditemukan di Yahoo Finance.', 'error')
+            flash(f'Ticker "{ticker}" is invalid or not found on Yahoo Finance.', 'error')
             return redirect(url_for('portfolio.add'))
 
         entry = PortfolioEntry(
@@ -65,7 +65,7 @@ def add():
             entry.current_price = price
 
         db.session.commit()
-        flash(f'Entry "{ticker}" berhasil ditambahkan!', 'success')
+        flash(f'Entry "{ticker}" added successfully!', 'success')
         return redirect(url_for('portfolio.index'))
 
     return render_template('portfolio.html', entries=[], user=current_user, show_add_form=True)
@@ -85,16 +85,16 @@ def edit(entry_id):
             purchase_price = float(purchase_price_str)
             quantity = int(quantity_str)
         except (ValueError, TypeError):
-            flash('Harga dan jumlah harus berupa angka.', 'error')
+            flash('Price and quantity must be numbers.', 'error')
             return redirect(url_for('portfolio.edit', entry_id=entry.id))
 
         if purchase_price <= 0 or quantity <= 0:
-            flash('Harga dan jumlah harus lebih dari 0.', 'error')
+            flash('Price and quantity must be greater than 0.', 'error')
             return redirect(url_for('portfolio.edit', entry_id=entry.id))
 
         # Validate ticker
         if not validate_ticker(ticker):
-            flash(f'Ticker "{ticker}" tidak valid atau tidak ditemukan di Yahoo Finance.', 'error')
+            flash(f'Ticker "{ticker}" is invalid or not found on Yahoo Finance.', 'error')
             return redirect(url_for('portfolio.edit', entry_id=entry.id))
 
         entry.ticker = ticker.upper()
@@ -107,7 +107,7 @@ def edit(entry_id):
             entry.current_price = price
 
         db.session.commit()
-        flash(f'Entry "{ticker}" berhasil diperbarui!', 'success')
+        flash(f'Entry "{ticker}" updated successfully!', 'success')
         return redirect(url_for('portfolio.index'))
 
     return render_template('portfolio.html', entries=[entry], user=current_user, show_edit_form=True, edit_entry=entry)
@@ -121,7 +121,7 @@ def delete(entry_id):
 
     db.session.delete(entry)
     db.session.commit()
-    flash(f'Entry "{ticker}" berhasil dihapus.', 'success')
+    flash(f'Entry "{ticker}" deleted successfully.', 'success')
     return redirect(url_for('portfolio.index'))
 
 
@@ -134,9 +134,9 @@ def refresh_price(entry_id):
     if price is not None:
         entry.current_price = price
         db.session.commit()
-        flash(f'Harga "{entry.ticker}" berhasil di-refresh!', 'success')
+        flash(f'Price for "{entry.ticker}" refreshed successfully!', 'success')
     else:
-        flash(f'Gagal mengambil harga untuk "{entry.ticker}".', 'error')
+        flash(f'Failed to fetch price for "{entry.ticker}".', 'error')
 
     return redirect(url_for('portfolio.index'))
 
@@ -148,7 +148,7 @@ def refresh_all():
     entries = PortfolioEntry.query.filter_by(user_id=current_user.id).all()
     
     if not entries:
-        flash('Portfolio Anda masih kosong.', 'warning')
+        flash('Your portfolio is empty.', 'warning')
         return redirect(url_for('portfolio.index'))
     
     success_count = 0
@@ -165,9 +165,9 @@ def refresh_all():
     db.session.commit()
     
     if success_count > 0:
-        flash(f'Berhasil refresh {success_count} harga.', 'success')
+        flash(f'Successfully refreshed {success_count} prices.', 'success')
     
     if failed_tickers:
-        flash(f'Gagal mengambil harga untuk: {", ".join(failed_tickers)}', 'error')
+        flash(f'Failed to fetch prices for: {", ".join(failed_tickers)}', 'error')
     
     return redirect(url_for('portfolio.index'))

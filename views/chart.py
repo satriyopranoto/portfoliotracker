@@ -32,7 +32,7 @@ def chart_view(ticker):
         df = t.history(period='2y')
 
         if df.empty or len(df) < 30:
-            flash(f'Data tidak mencukupi untuk {ticker} (< 30 bar).', 'error')
+            flash(f'Insufficient data for {ticker} (< 30 bars).', 'error')
             return render_template('chart.html', ticker=ticker, error=True)
 
         # Ensure column names match expectations
@@ -78,5 +78,5 @@ def chart_view(ticker):
         )
 
     except Exception as e:
-        flash(f'Gagal memuat data untuk {ticker}: {str(e)}', 'error')
+        flash(f'Failed to load data for {ticker}: {str(e)}', 'error')
         return render_template('chart.html', ticker=ticker, error=True)
