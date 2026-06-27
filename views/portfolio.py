@@ -138,6 +138,7 @@ def refresh_price(entry_id):
     else:
         flash(f'Gagal mengambil harga untuk "{entry.ticker}".', 'error')
 
+    return redirect(url_for('portfolio.index'))
 
 
 @portfolio_bp.route('/refresh-all')
@@ -169,6 +170,4 @@ def refresh_all():
     if failed_tickers:
         flash(f'Gagal mengambil harga untuk: {", ".join(failed_tickers)}', 'error')
     
-    return redirect(url_for('portfolio.index'))
-
     return redirect(url_for('portfolio.index'))

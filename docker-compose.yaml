@@ -1,0 +1,15 @@
+services:
+  portfolio-tracker:
+    build: .
+    container_name: portfolio-tracker
+    ports:
+      - "5005:5005"
+    volumes:
+      - portfolio-data:/app/data
+    environment:
+      - DATABASE_URI=sqlite:////app/data/portfolio.db
+      - SECRET_KEY=portfolio-tracker-docker-secret-key-2024
+    restart: unless-stopped
+
+volumes:
+  portfolio-data:
