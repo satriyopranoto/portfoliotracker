@@ -45,10 +45,33 @@
         {{ bokeh_cdn | safe }}
 
         <!-- Bokeh Chart -->
-        <div id="bokeh-chart-container" style="border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; min-height: 580px;">
+        <div id="bokeh-chart-container" style="border-radius: 8px; overflow: hidden; margin-bottom: 0.5rem; min-height: 580px;">
             {{ chart_div | safe }}
         </div>
         {{ chart_script | safe }}
+
+        <!-- Timeframe Selector -->
+        <div style="display: flex; gap: 0.4rem; justify-content: flex-end; margin-bottom: 1.5rem;">
+            {% set tfs = [('1h', 'H1'), ('4h', 'H4'), ('1d', 'D1'), ('1wk', 'W1'), ('1mo', 'MN')] %}
+            {% for tf_key, tf_lbl in tfs %}
+                {% set is_active = (tf == tf_key) %}
+                <a href="{{ url_for('chart.chart_view', ticker=ticker, tf=tf_key) }}"
+                   style="
+                       padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.75rem;
+                       text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;
+                       transition: all 0.15s;
+                       {% if is_active %}
+                           background: rgba(212, 175, 55, 0.3); color: #d4af37;
+                           border: 1px solid rgba(212, 175, 55, 0.2);
+                       {% else %}
+                           background: transparent; color: #99907c;
+                           border: 1px solid rgba(212, 175, 55, 0.1);
+                       {% endif %}
+                   "
+                   onmouseover="this.style.background='rgba(212,175,55,0.2)'; this.style.color='#d4af37';"
+                   onmouseout="this.style.background='{{ 'rgba(212,175,55,0.3)' if is_active else 'transparent' }}'; this.style.color='{{ '#d4af37' if is_active else '#99907c' }}';">{{ tf_lbl }}</a>
+            {% endfor %}
+        </div>
 
         <!-- Trend Analysis -->
         <div class="row" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
@@ -122,7 +145,7 @@
 
         <!-- Info -->
         <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.85rem;">
-            {{ "{:,}".format(bars) }} bars · Data: Yahoo Finance · Loaded in {{ duration }}ms
+            {{ "{:,}".format(bars) }} {{ bars_label }} · Data: Yahoo Finance · Loaded in {{ duration }}ms
         </div>
     {% endif %}
 </div>
