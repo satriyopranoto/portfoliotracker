@@ -74,9 +74,49 @@ def calculate_donchian(df: pd.DataFrame, period: int = 20) -> tuple:
     """
     Donchian Channel.
     Returns (upper, middle, lower) channels.
-    Lower channel digunakan sebagai trailing stop loss (SL Donchian).
     """
     upper = df['High'].rolling(window=period).max()
     lower = df['Low'].rolling(window=period).min()
     middle = (upper + lower) / 2
     return upper, middle, lower
+
+
+def calculate_sl(df: pd.DataFrame, atr_multiple: float = 2.8, atr_period: int = 10) -> pd.Series:
+    """
+    Donchian Stop Loss — ported from stocktrade ``calculate_sl()``.
+    
+    Logic (sama persis dengan EA MT4 & stocktrade):
+      ero = atr_multiple * atr_period             # 2.8 x 10 = 28
+      r = highest(high, ero)                      # Upper channel
+      s = lowest(low, ero)                        # Lower channel
+      ab = high > r[1] ? 1 : (low < s[1] ? -1 : 0)
+      ac = valuewhen(ab != 0, ab, 0) (forward-filled)
+      sl = ac == 1 ? s : r
+      
+    Uptrend (ac=1):    sl = lower channel (s)  → trailing stop naik
+    Downtrend (ac=-1): sl = upper channel (r)  → trailing stop turun
+    
+    Returns pd.Series aligned with df.index.
+    """
+    high = df['High'].astype(float)
+    low = df['Low'].astype(float)
+    
+    ero = int(atr_multiple * atr_period)
+    
+    # Donchian dengan shift(1) untuk hindari look-ahead
+    r_prev = high.rolling(window=ero).max().shift(1)
+    s_prev = low.rolling(window=ero).min().shift(1)
+    r_curr = high.rolling(window=ero).max()
+    s_curr = low.rolling(window=ero).min()
+    
+    # Trigger arah: ab
+    ab = np.where(high > r_prev, 1,
+                  np.where(low < s_prev, -1, 0))
+    
+    # Direction persistence: ac = valuewhen(ab != 0, ab, 0)
+    ac = pd.Series(ab).replace(0, np.nan).ffill().fillna(0).values
+    
+    # SL = ac == 1 ? lower_channel : upper_channel
+    sl = np.where(ac == 1, s_curr, r_curr)
+    
+    return pd.Series(sl, index=df.index)

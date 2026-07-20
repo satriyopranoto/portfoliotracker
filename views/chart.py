@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import time
 
-from utils.indicators import calculate_adx, calculate_sma, calculate_bollinger_bands, calculate_donchian
+from utils.indicators import calculate_adx, calculate_sma, calculate_bollinger_bands, calculate_donchian, calculate_sl
 from utils.trend_analysis import calculate_trend_analysis, calculate_adx_sma_pct
 from utils.bokeh_chart import generate_chart
 from bokeh.resources import CDN
@@ -97,9 +97,8 @@ def chart_view(ticker):
         df['BB_lower'] = lower_bb
         df['SMA200'] = calculate_sma(df['Close'], 200)
 
-        # Donchian Channel (SL)
-        donchian_upper, donchian_mid, donchian_lower = calculate_donchian(df, period=20)
-        df['Donchian_lower'] = donchian_lower
+        # Donchian SL (direction-dependent, 2.8x10=28 lookback — match stocktrade/EA)
+        df['Donchian_lower'] = calculate_sl(df, atr_multiple=2.8, atr_period=10)
 
         # Trend analysis
         ta = calculate_trend_analysis(df, adx_series, pdi_series, mdi_series, middle_bb)
