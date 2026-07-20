@@ -81,3 +81,39 @@ print('Password reset done!')
 **Peringatan:**
 - Data 1h/4h butuh koneksi internet stabil karena jumlah bar lebih banyak
 - Resample 4h dari data 1h — minimal 30 bar setelah resample, jika kurang pakai data 1h original
+
+---
+
+### 3. Stop Loss (SL) — Direction-Dependent Donchian (Fix)
+
+**Symptom (sebelum fix):** SL menggunakan simple Donchian Channel `period=20` — hanya lower channel sebagai SL. Tidak direction-dependent. Tidak match dengan EA MT4 dan stocktrade.
+
+**Fix:** Ganti `calculate_donchian()` dengan `calculate_sl()` dari `utils/indicators.py`.
+
+**Logic `calculate_sl()` (sama persis dengan stocktrade & EA MT4):**
+
+```python
+ero = atr_multiple * atr_period        # default: 2.8 x 10 = 28
+r_prev = high.rolling(ero).max().shift(1)  # Highest high (shift 1)
+s_prev = low.rolling(ero).min().shift(1)   # Lowest low (shift 1)
+r_curr = high.rolling(ero).max()
+s_curr = low.rolling(ero).min()
+
+ab = high > r_prev ? 1 : (low < s_prev ? -1 : 0)  # Trigger arah
+ac = ffill(ab)                                      # Persist direction
+sl = ac == 1 ? s_curr : r_curr                      # SL sesuai arah
+```
+
+**Perbedaan dengan Donchian biasa:**
+
+| Aspek | Donchian biasa (old) | `calculate_sl()` (new) |
+|-------|---------------------|------------------------|
+| Lookback | 20 bar | 28 bar (2.8 × 10) |
+| Direction | Tidak, SL tetap lower | Ya — uptrend: lower channel, downtrend: upper channel |
+| Shift 1 | Tidak (look-ahead bias) | Ya — pake `.shift(1)` untuk r_prev/s_prev |
+| Ffill | Tidak | Ya — directional persistence |
+
+**Key locations:**
+- `utils/indicators.py` — `calculate_sl()` function
+- `views/chart.py` line ~100 — panggil `calculate_sl(df, atr_multiple=2.8, atr_period=10)`
+- `utils/bokeh_chart.py` — membaca `df['Donchian_lower']` untuk plotting (column name tetap sama)
